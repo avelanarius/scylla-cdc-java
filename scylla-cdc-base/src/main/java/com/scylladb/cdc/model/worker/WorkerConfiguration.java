@@ -1,5 +1,6 @@
 package com.scylladb.cdc.model.worker;
 
+import java.time.Clock;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -25,9 +26,11 @@ public final class WorkerConfiguration {
     public final RetryBackoff workerRetryBackoff;
 
     private final ScheduledExecutorService executorService;
+
+    private final Clock clock;
     
     private WorkerConfiguration(WorkerTransport transport, WorkerCQL cql, Consumer consumer, long queryTimeWindowSizeMs,
-            long confidenceWindowSizeMs, RetryBackoff workerRetryBackoff, ScheduledExecutorService executorService) {
+            long confidenceWindowSizeMs, RetryBackoff workerRetryBackoff, ScheduledExecutorService executorService, Clock clock) {
         this.transport = Preconditions.checkNotNull(transport);
         this.cql = Preconditions.checkNotNull(cql);
         this.consumer = Preconditions.checkNotNull(consumer);
@@ -37,10 +40,15 @@ public final class WorkerConfiguration {
         this.confidenceWindowSizeMs = confidenceWindowSizeMs;
         this.workerRetryBackoff = Preconditions.checkNotNull(workerRetryBackoff);
         this.executorService = executorService;
+        this.clock = Preconditions.checkNotNull(clock);
     }
     
     public ScheduledExecutorService getExecutorService() {
         return executorService;
+    }
+
+    public Clock getClock() {
+        return clock;
     }
 
     public static Builder builder() {
@@ -57,6 +65,8 @@ public final class WorkerConfiguration {
         private long confidenceWindowSizeMs = DEFAULT_CONFIDENCE_WINDOW_SIZE_MS;
 
         private RetryBackoff workerRetryBackoff = DEFAULT_WORKER_RETRY_BACKOFF;
+
+        private Clock clock = Clock.systemDefaultZone();
 
         public Builder withTransport(WorkerTransport transport) {
             this.transport = Preconditions.checkNotNull(transport);
@@ -111,12 +121,17 @@ public final class WorkerConfiguration {
             return this;
         }
 
+        public WorkerConfiguration.Builder withClock(Clock clock) {
+            this.clock = Preconditions.checkNotNull(clock);
+            return this;
+        }
+
         public WorkerConfiguration build() {
             if (executorService == null) {
                 executorService = Executors.newScheduledThreadPool(1);
             }
             return new WorkerConfiguration(transport, cql, consumer, queryTimeWindowSizeMs, confidenceWindowSizeMs,
-                    workerRetryBackoff, executorService);
+                    workerRetryBackoff, executorService, clock);
         }
     }
 }
