@@ -28,6 +28,10 @@ public final class TaskState {
         return TimeUUID.startOf(windowStart.toDate().getTime());
     }
 
+    public Timestamp getWindowStartTimestamp() {
+        return windowStart;
+    }
+
     public boolean hasPassed(Timestamp t) {
         return windowStart.compareTo(t) > 0;
     }
