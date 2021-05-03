@@ -39,6 +39,7 @@ import com.scylladb.cdc.model.TableName;
 public final class Driver3MasterCQL extends BaseMasterCQL {
     private static final FluentLogger logger = FluentLogger.forEnclosingClass();
     private final Session session;
+    private final ConsistencyLevel consistencyLevel;
 
     // (Streams description table V2)
     //
@@ -59,6 +60,7 @@ public final class Driver3MasterCQL extends BaseMasterCQL {
 
     public Driver3MasterCQL(Driver3Session session) {
         this.session = Preconditions.checkNotNull(session).getDriverSession();
+        this.consistencyLevel = session.getConsistencyLevel();
     }
 
     private CompletableFuture<Boolean> fetchShouldQueryLegacyTables() {
@@ -189,11 +191,6 @@ public final class Driver3MasterCQL extends BaseMasterCQL {
                 .where(eq("key", "rewritten"));
     }
 
-    private ConsistencyLevel computeCL() {
-        return session.getCluster().getMetadata().getAllHosts().size() > 1 ? ConsistencyLevel.QUORUM
-                : ConsistencyLevel.ONE;
-    }
-
     private void consumeOneResult(ResultSet rs, CompletableFuture<Optional<Row>> result) {
         int availCount = rs.getAvailableWithoutFetching();
         if (availCount == 0) {
@@ -249,7 +246,7 @@ public final class Driver3MasterCQL extends BaseMasterCQL {
 
     private CompletableFuture<Optional<Row>> executeOne(Statement stmt) {
         CompletableFuture<Optional<Row>> result = new CompletableFuture<>();
-        ResultSetFuture future = session.executeAsync(stmt.setConsistencyLevel(computeCL()));
+        ResultSetFuture future = session.executeAsync(stmt.setConsistencyLevel(consistencyLevel));
         Futures.addCallback(future, new FutureCallback<ResultSet>() {
 
             @Override
@@ -267,7 +264,7 @@ public final class Driver3MasterCQL extends BaseMasterCQL {
 
     private CompletableFuture<Collection<Row>> executeMany(Statement stmt) {
         CompletableFuture<Collection<Row>> result = new CompletableFuture<>();
-        ResultSetFuture future = session.executeAsync(stmt.setConsistencyLevel(computeCL()));
+        ResultSetFuture future = session.executeAsync(stmt.setConsistencyLevel(consistencyLevel));
         Futures.addCallback(future, new FutureCallback<ResultSet>() {
 
             @Override

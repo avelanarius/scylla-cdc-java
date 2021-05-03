@@ -10,17 +10,33 @@ import java.util.List;
 public class CQLConfiguration {
     private static final int DEFAULT_PORT = 9042;
 
+    public enum ConsistencyLevel {
+        ANY,
+        ONE,
+        TWO,
+        THREE,
+        QUORUM,
+        ALL,
+        LOCAL_QUORUM,
+        EACH_QUORUM,
+        SERIAL,
+        LOCAL_SERIAL,
+        LOCAL_ONE
+    }
+
     public final List<InetSocketAddress> contactPoints;
     public final String user;
     public final String password;
+    public final ConsistencyLevel consistencyLevel;
 
     private CQLConfiguration(List<InetSocketAddress> contactPoints,
-                            String user, String password) {
+                            String user, String password, ConsistencyLevel consistencyLevel) {
         this.contactPoints = Preconditions.checkNotNull(contactPoints);
         Preconditions.checkArgument(!contactPoints.isEmpty());
 
         this.user = user;
         this.password = password;
+        this.consistencyLevel = Preconditions.checkNotNull(consistencyLevel);
         // Either someone did not provide credentials
         // or provided user-password pair.
         Preconditions.checkArgument((this.user == null && this.password == null)
@@ -35,6 +51,8 @@ public class CQLConfiguration {
         private final List<InetSocketAddress> contactPoints = new ArrayList<>();
         private String user = null;
         private String password = null;
+        // nocheckin, zly consistencylevel, QUORUM 1 node to zle wiesci!
+        private ConsistencyLevel consistencyLevel = ConsistencyLevel.ONE;
 
         public Builder addContactPoint(InetSocketAddress contactPoint) {
             Preconditions.checkNotNull(contactPoint);
@@ -65,8 +83,13 @@ public class CQLConfiguration {
             return this;
         }
 
+        public Builder withConsistencyLevel(ConsistencyLevel consistencyLevel) {
+            this.consistencyLevel = Preconditions.checkNotNull(consistencyLevel);
+            return this;
+        }
+
         public CQLConfiguration build() {
-            return new CQLConfiguration(contactPoints, user, password);
+            return new CQLConfiguration(contactPoints, user, password, consistencyLevel);
         }
     }
 }

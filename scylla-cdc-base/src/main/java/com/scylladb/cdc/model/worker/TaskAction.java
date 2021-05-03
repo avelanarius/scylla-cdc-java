@@ -180,6 +180,10 @@ abstract class TaskAction {
 
         @Override
         public CompletableFuture<TaskAction> run() {
+            // FIXME: When a new window starts, there are two duplicate
+            // states saved: one by WorkerTransport::moveStateToNextWindow
+            // and by WorkerTransport::setState. The second might be
+            // unnecessary.
             TaskState newState = task.state.moveToNextWindow(workerConfiguration.queryTimeWindowSizeMs);
             workerConfiguration.transport.moveStateToNextWindow(task.id, newState);
             Task newTask = task.updateState(newState);

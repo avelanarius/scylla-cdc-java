@@ -15,6 +15,8 @@ import com.scylladb.cdc.model.worker.ChangeSchema;
 public interface Field {
     public Object getAsObject();
 
+    // FIXME:
+    // WRONG!!!
     public ChangeSchema.DataType getDataType();
 
     default boolean isNull() {

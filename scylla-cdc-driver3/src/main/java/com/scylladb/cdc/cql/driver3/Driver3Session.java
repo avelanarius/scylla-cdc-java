@@ -1,6 +1,7 @@
 package com.scylladb.cdc.cql.driver3;
 
 import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.ConsistencyLevel;
 import com.datastax.driver.core.ProtocolVersion;
 import com.datastax.driver.core.Session;
 import com.scylladb.cdc.cql.CQLConfiguration;
@@ -8,6 +9,7 @@ import com.scylladb.cdc.cql.CQLConfiguration;
 public class Driver3Session implements AutoCloseable {
     private final Cluster driverCluster;
     private final Session driverSession;
+    private final ConsistencyLevel consistencyLevel;
 
     public Driver3Session(CQLConfiguration cqlConfiguration) {
         Cluster.Builder clusterBuilder = Cluster.builder()
@@ -22,10 +24,52 @@ public class Driver3Session implements AutoCloseable {
 
         driverCluster = clusterBuilder.build();
         driverSession = driverCluster.connect();
+
+        switch (cqlConfiguration.consistencyLevel) {
+            case ANY:
+                consistencyLevel = ConsistencyLevel.ANY;
+                break;
+            case ONE:
+                consistencyLevel = ConsistencyLevel.ONE;
+                break;
+            case TWO:
+                consistencyLevel = ConsistencyLevel.TWO;
+                break;
+            case THREE:
+                consistencyLevel = ConsistencyLevel.THREE;
+                break;
+            case QUORUM:
+                consistencyLevel = ConsistencyLevel.QUORUM;
+                break;
+            case ALL:
+                consistencyLevel = ConsistencyLevel.ALL;
+                break;
+            case LOCAL_QUORUM:
+                consistencyLevel = ConsistencyLevel.LOCAL_QUORUM;
+                break;
+            case EACH_QUORUM:
+                consistencyLevel = ConsistencyLevel.EACH_QUORUM;
+                break;
+            case SERIAL:
+                consistencyLevel = ConsistencyLevel.SERIAL;
+                break;
+            case LOCAL_SERIAL:
+                consistencyLevel = ConsistencyLevel.LOCAL_SERIAL;
+                break;
+            case LOCAL_ONE:
+                consistencyLevel = ConsistencyLevel.LOCAL_ONE;
+                break;
+            default:
+                throw new IllegalStateException("Unsupported consistency level: " + cqlConfiguration.consistencyLevel);
+        }
     }
 
     protected Session getDriverSession() {
         return driverSession;
+    }
+
+    protected ConsistencyLevel getConsistencyLevel() {
+        return consistencyLevel;
     }
 
     @Override

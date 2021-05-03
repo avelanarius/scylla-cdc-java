@@ -39,7 +39,7 @@ public final class WorkerConfiguration {
         Preconditions.checkArgument(confidenceWindowSizeMs > 0);
         this.confidenceWindowSizeMs = confidenceWindowSizeMs;
         this.workerRetryBackoff = Preconditions.checkNotNull(workerRetryBackoff);
-        this.executorService = executorService;
+        this.executorService = Preconditions.checkNotNull(executorService);
         this.clock = Preconditions.checkNotNull(clock);
     }
     

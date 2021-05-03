@@ -26,6 +26,7 @@ class Driver3Cell implements Cell {
         return change.getAsObject(columnDefinition);
     }
 
+    // FIXME: getDataType() - wrong naming!
     @Override
     public DataType getDataType() {
         return columnDefinition.getCdcLogDataType();

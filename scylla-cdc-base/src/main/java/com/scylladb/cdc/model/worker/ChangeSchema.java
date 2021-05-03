@@ -219,6 +219,7 @@ public class ChangeSchema {
             this.baseIsNonfrozenList = baseIsNonfrozenList;
         }
 
+        // TODO - czy get index to nie powinno byc raczej cos ukrytego???
         public int getIndex() {
             return index;
         }
@@ -255,6 +256,7 @@ public class ChangeSchema {
             return baseIsNonfrozenList;
         }
 
+        // FIXME - not good?
         public ColumnDefinition getDeletedColumn(ChangeSchema schema) {
             if (baseTableDataType == null) {
                 throw new IllegalStateException("Cannot get deleted elements column for CDC columns.");

@@ -506,7 +506,6 @@ public class WorkerTest {
         try (WorkerThread workerThread = new WorkerThread(
                 mockWorkerCQL, workerTransport, accumulatingConsumer, TEST_GENERATION, TEST_TABLE_NAME)) {
             // Let if fail a few times more.
-
             int initialFailureCount = mockWorkerCQL.getFailureCount();
             DEFAULT_AWAIT.until(() -> mockWorkerCQL.getFailureCount() > initialFailureCount + 2);
 

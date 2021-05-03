@@ -95,6 +95,7 @@ public interface RawChange extends Iterable<Cell> {
     }
 
     default boolean isDeleted(ChangeSchema.ColumnDefinition c) {
+        // FIXME: To jest kompletnie zle???
         ChangeSchema.DataType type = c.getBaseTableDataType();
         if (type != null && type.isAtomic()) {
             return isNull(c);
@@ -119,7 +120,7 @@ public interface RawChange extends Iterable<Cell> {
     }
 
     default Iterator<Cell> metadata() {
-        return dataStream().iterator();
+        return metadataStream().iterator();
     }
     
     default Stream<Cell> stream() {

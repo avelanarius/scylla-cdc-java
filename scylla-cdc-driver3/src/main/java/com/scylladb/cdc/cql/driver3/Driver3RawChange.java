@@ -34,7 +34,6 @@ public final class Driver3RawChange implements RawChange {
         if (isNull(c)) {
             return null;
         }
-        // TODO - check if quoteIfNecessary is needed here in getObject()
         return Driver3ToLibraryTranslator.translate(row.getObject(c.getIndex()), c.getCdcLogDataType());
     }
 

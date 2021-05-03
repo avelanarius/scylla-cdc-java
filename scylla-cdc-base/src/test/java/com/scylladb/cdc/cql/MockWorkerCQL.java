@@ -18,8 +18,10 @@ import java.util.stream.Collectors;
 public class MockWorkerCQL implements WorkerCQL {
     private volatile Map<TableName, Optional<Long>> tablesTTL = new HashMap<>();
     private volatile List<RawChange> rawChanges = Collections.emptyList();
+
     private final Set<Task> createReaderInvocations = ConcurrentHashMap.newKeySet();
     private final Set<Task> finishedReaders = ConcurrentHashMap.newKeySet();
+
     private final Multiset<RawChange> injectedRawChangeFailures = ConcurrentHashMultiset.create();
     private final Multiset<RawChange> injectedRawChangeConstantFailures = ConcurrentHashMultiset.create();
     private final AtomicInteger failureCount = new AtomicInteger(0);

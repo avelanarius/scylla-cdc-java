@@ -38,10 +38,12 @@ public final class Driver3WorkerCQL implements WorkerCQL {
     private static final FluentLogger logger = FluentLogger.forEnclosingClass();
 
     private final Session session;
+    private final ConsistencyLevel consistencyLevel;
     private final Map<TableName, PreparedStatement> preparedStmts = new HashMap<>();
 
     public Driver3WorkerCQL(Driver3Session session) {
         this.session = Preconditions.checkNotNull(session).getDriverSession();
+        this.consistencyLevel = session.getConsistencyLevel();
     }
 
     private static final class PreparedResult {
@@ -159,18 +161,13 @@ public final class Driver3WorkerCQL implements WorkerCQL {
 
     }
 
-    private ConsistencyLevel computeCL() {
-        return session.getCluster().getMetadata().getAllHosts().size() > 1 ? ConsistencyLevel.QUORUM
-                : ConsistencyLevel.ONE;
-    }
-
     private CompletableFuture<Reader> query(PreparedStatement stmt, Task task) {
         CompletableFuture<Reader> result = new CompletableFuture<>();
         ResultSetFuture future = session
                 .executeAsync(stmt
                         .bind(task.streams.stream().map(StreamId::getValue).collect(Collectors.toList()),
                                 task.state.getWindowStart(), task.state.getWindowEnd())
-                        .setConsistencyLevel(computeCL()));
+                        .setConsistencyLevel(consistencyLevel));
         logger.atFine().log("Querying window: [%s, %s] for task: %s, task state: %s", task.state.getWindowStart(), task.state.getWindowEnd(), task.id, task.state);
 
         Futures.addCallback(future, new FutureCallback<ResultSet>() {

@@ -91,9 +91,12 @@ public class Driver3SchemaBuilder {
     }
 
     private ChangeSchema.ColumnDefinition translateColumnDefinition(ColumnDefinitions.Definition driverDefinition, int index) {
+        // FIXME - not setting for pk, ck - baseTableType
+        // quickfix - baseType = dataType...
+
         String columnName = driverDefinition.getName();
         ChangeSchema.DataType dataType = translateColumnDataType(driverDefinition.getType());
-        ChangeSchema.DataType baseType = null;
+        ChangeSchema.DataType baseType = dataType; // nocheckin
         ChangeSchema.ColumnType baseTableColumnType = ChangeSchema.ColumnType.REGULAR;
         boolean baseIsNonfrozenList = false;
         if (baseTablePartitionKeyColumnNames.contains(columnName)) {
@@ -121,17 +124,8 @@ public class Driver3SchemaBuilder {
             if (baseColumnMetadata != null) {
                 baseType = translateColumnDataType(baseColumnMetadata.getType());
                 baseIsNonfrozenList = baseType.getCqlType() == ChangeSchema.CqlType.LIST && !baseType.isFrozen();
-
-                // some sanity checking:
-                if (baseIsNonfrozenList && (
-                        dataType.getCqlType() != ChangeSchema.CqlType.MAP ||
-                        dataType.getTypeArguments().get(0).getCqlType() != ChangeSchema.CqlType.TIMEUUID ||
-                        !driverDefinition.getType().getTypeArguments().get(1).equals(baseType.getTypeArguments().get(0)))) {
-                    throw new IllegalStateException(
-                            String.format("expected CDC value column type map<timeuuid, %s> for base column type list<%s>, got map<%s, %s>",
-                                    dataType.getTypeArguments().get(1).getCqlType().toString(), baseType.getTypeArguments().get(0).toString(),
-                                    dataType.getTypeArguments().get(0).getCqlType().toString(), dataType.getTypeArguments().get(1).getCqlType().toString()));
-                }
+                
+                // w ogole usunac baseIsNonfrozenlist....
             }
         }
         return new ChangeSchema.ColumnDefinition(columnName, index, dataType, baseType, baseTableColumnType, baseIsNonfrozenList);

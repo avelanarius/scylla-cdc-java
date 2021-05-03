@@ -5,20 +5,15 @@ import com.scylladb.cdc.lib.CDCConsumer;
 import com.scylladb.cdc.lib.RawChangeConsumerProvider;
 import com.scylladb.cdc.model.StreamId;
 import com.scylladb.cdc.model.TableName;
-import com.scylladb.cdc.model.worker.ChangeId;
-import com.scylladb.cdc.model.worker.ChangeSchema;
-import com.scylladb.cdc.model.worker.ChangeTime;
-import com.scylladb.cdc.model.worker.RawChange;
-import com.scylladb.cdc.model.worker.RawChangeConsumer;
+import com.scylladb.cdc.model.worker.*;
 import com.scylladb.cdc.model.worker.cql.Cell;
+import com.scylladb.cdc.model.worker.cql.ProcessedUpdateCell;
 import net.sourceforge.argparse4j.ArgumentParsers;
 import net.sourceforge.argparse4j.inf.ArgumentParser;
 import net.sourceforge.argparse4j.inf.ArgumentParserException;
 import net.sourceforge.argparse4j.inf.Namespace;
-import sun.misc.Signal;
 
 import java.text.SimpleDateFormat;
-import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
@@ -80,8 +75,7 @@ public class Main {
 
             // Wait for SIGINT:
             CountDownLatch terminationLatch = new CountDownLatch(1);
-            Signal.handle(new Signal("INT"), signal -> terminationLatch.countDown());
-            terminationLatch.await();
+            Thread.sleep(100000);
         } catch (InterruptedException ex) {
             System.err.println("Exception occurred while running the Printer: "
                 + ex.getMessage());
@@ -91,63 +85,33 @@ public class Main {
     }
 
     private static void printChange(RawChange change) {
-        // Get the ID of the change which contains stream_id and time.
-        ChangeId changeId = change.getId();
-        StreamId streamId = changeId.getStreamId();
-        ChangeTime changeTime = changeId.getChangeTime();
-
-        // Get the operation type, for example: ROW_UPDATE, POST_IMAGE.
-        RawChange.OperationType operationType = change.getOperationType();
-
-        prettyPrintChangeHeader(streamId, changeTime, operationType);
-
-        // In each RawChange there is an information about the
-        // change schema.
-        ChangeSchema changeSchema = change.getSchema();
-
-        // There are two types of columns inside the ChangeSchema:
-        //   - CDC log columns (cdc$time, cdc$stream_id, ...)
-        //   - base table columns
-        //
-        // CDC log columns can be easily accessed by RawChange
-        // helper methods (such as getTTL(), getId()).
-        //
-        // Let's concentrate on non-CDC columns (those are
-        // from the base table) and iterate over them:
-        List<ChangeSchema.ColumnDefinition> nonCdcColumnDefinitions = changeSchema.getNonCdcColumnDefinitions();
-        int columnIndex = 0; // For pretty printing.
-
-        for (ChangeSchema.ColumnDefinition columnDefinition : nonCdcColumnDefinitions) {
-            String columnName = columnDefinition.getColumnName();
-
-            // We can get information if this column was a part of primary key
-            // in the base table. Note that in CDC log table different columns
-            // are part of primary key (cdc$stream_id, cdc$time, batch_seq_no).
-            ChangeSchema.ColumnType baseTableColumnType = columnDefinition.getBaseTableColumnType();
-
-            // Get the information about the data type (as present in CDC log).
-            ChangeSchema.DataType logDataType = columnDefinition.getCdcLogDataType();
-
-            // Finally, we can get the value of this column:
-            Cell cell = change.getCell(columnName);
-
-            // Depending on the logDataType, you will want
-            // to use different methods of Cell, for example
-            // cell.getInt() if column is of INT type:
-            //
-            // Integer value = cell.getInt();
-            //
-            // getInt() can return null, if the cell value
-            // was NULL.
-            //
-            // For printing purposes, we use getAsObject():
-            Object cellValue = cell.getAsObject();
-
-            prettyPrintCell(columnName, baseTableColumnType, logDataType,
-                    cellValue, (++columnIndex == nonCdcColumnDefinitions.size()));
+        if (change.getOperationType() == RawChange.OperationType.ROW_UPDATE) {
+            UpdateChange uc = new UpdateChange(null, change, null);
+            uc.getPrimaryKeyStream().forEach(pk -> {
+                System.out.println("PrimK | " + pk.toString());
+            });
+            uc.getPartitionKeyStream().forEach(pk -> {
+                System.out.println("PK | " + pk.toString());
+            });
+            uc.getPartitionKeyStream().forEach(pk -> {
+                System.out.println("CK | " + pk.toString());
+            });
+            uc.getCellsStream().forEach(c -> {
+                System.out.println("Cell | " + c.toString());
+            });
+            ProcessedUpdateCell theCell = uc.getCell("v");
+            System.out.println(theCell);
+            System.out.println(theCell.getUDT().getMutationType());
+            switch (theCell.getUDT().getMutationType()) {
+                case UPDATE:
+                    System.out.println(theCell.getUDT().getUpdatedFields());
+                    break;
+                case OVERWRITE:
+                    System.out.println(theCell.getUDT().getOverwriteFields());
+                    break;
+            }
+            System.out.println("===========");
         }
-
-        prettyPrintEnd();
     }
 
     // Some pretty printing helpers:
