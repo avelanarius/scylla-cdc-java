@@ -7,9 +7,9 @@ on:
     branches: [ master ]
 
 jobs:
-  build:
+  run-unit-tests:
+    name: Run unit tests
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v2
       - name: Set up JDK 8
@@ -17,7 +17,7 @@ jobs:
         with:
           java-version: '8'
           distribution: 'adopt'
-      - name: Cache Maven packages
+      - name: Cache Maven dependencies
         uses: actions/cache@v2
         with:
           path: ~/.m2
@@ -26,10 +26,9 @@ jobs:
       - name: Run unit tests with Maven
         run: mvn -B test
       - name: Publish test report
-        uses: dorny/test-reporter@v1
-        if: success() || failure()
+        uses: mikepenz/action-junit-report@v2
+        if: always()
         with:
-          name: Unit tests
-          path: '**/target/*-reports/TEST-*.xml'    # Path to test results
-          reporter: java-junit
-        
+          check_name: Publish unit tests report
+          require_tests: true
+          report_paths: '**/target/*-reports/TEST-*.xml'

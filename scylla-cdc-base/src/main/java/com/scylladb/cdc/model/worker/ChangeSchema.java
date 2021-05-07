@@ -150,7 +150,7 @@ public class ChangeSchema {
         }
 
         public boolean isAtomic() {
-            return cqlType.compareTo(CqlType.LIST) < 0 || isFrozen();
+            return false;
         }
 
         public List<DataType> getTypeArguments() {

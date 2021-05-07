@@ -67,6 +67,7 @@ public class MasterTest {
         // MasterTransport without an initial generation
         // (starting from beginning) and never finishing
         // any generation.
+
         MockMasterTransport masterTransport = new MockMasterTransport();
         ConfigureWorkersTracker masterTransportTracker = masterTransport.tracker(DEFAULT_AWAIT);
 
